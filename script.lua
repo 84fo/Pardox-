@@ -1,65 +1,80 @@
--- Teleport Forward GUI Script
-
+--// Variables
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
-local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
--- GUI
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "TeleportUI"
-pcall(function()
-    ScreenGui.Parent = game.CoreGui
-end)
+local savedPosition = nil
 
--- Button
-local Button = Instance.new("TextButton")
-Button.Size = UDim2.new(0, 120, 0, 50)
-Button.Position = UDim2.new(0.5, -60, 0.5, -25)
-Button.Text = "Forward"
-Button.BackgroundColor3 = Color3.fromRGB(25,25,25)
-Button.TextColor3 = Color3.fromRGB(255,255,255)
-Button.Parent = ScreenGui
+--// GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game.CoreGui
 
--- Drag System
-local dragging, dragInput, mousePos, framePos
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 220, 0, 170)
+frame.Position = UDim2.new(0.5, -110, 0.5, -85)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.Active = true
+frame.Draggable = true
+frame.Parent = screenGui
 
-Button.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        mousePos = input.Position
-        framePos = Button.Position
+--// Save Button
+local saveBtn = Instance.new("TextButton")
+saveBtn.Size = UDim2.new(1, -20, 0, 40)
+saveBtn.Position = UDim2.new(0, 10, 0, 10)
+saveBtn.Text = "Save Position"
+saveBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+saveBtn.TextColor3 = Color3.new(1,1,1)
+saveBtn.Parent = frame
 
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
+--// Teleport Button
+local tpBtn = Instance.new("TextButton")
+tpBtn.Size = UDim2.new(1, -20, 0, 40)
+tpBtn.Position = UDim2.new(0, 10, 0, 60)
+tpBtn.Text = "Teleport"
+tpBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+tpBtn.TextColor3 = Color3.new(1,1,1)
+tpBtn.Parent = frame
+
+--// Forward Button (الجديد 🔥)
+local forwardBtn = Instance.new("TextButton")
+forwardBtn.Size = UDim2.new(1, -20, 0, 40)
+forwardBtn.Position = UDim2.new(0, 10, 0, 110)
+forwardBtn.Text = "Forward"
+forwardBtn.BackgroundColor3 = Color3.fromRGB(255, 170, 0)
+forwardBtn.TextColor3 = Color3.new(1,1,1)
+forwardBtn.Parent = frame
+
+--// Save Position
+saveBtn.MouseButton1Click:Connect(function()
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        savedPosition = character.HumanoidRootPart.CFrame
+        saveBtn.Text = "Saved!"
+        task.wait(1)
+        saveBtn.Text = "Save Position"
     end
 end)
 
-Button.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
+--// Teleport to Saved
+tpBtn.MouseButton1Click:Connect(function()
+    if savedPosition then
+        character.HumanoidRootPart.CFrame = savedPosition
+    else
+        tpBtn.Text = "No Position!"
+        task.wait(1)
+        tpBtn.Text = "Teleport"
     end
 end)
 
-game:GetService("UserInputService").InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - mousePos
-        Button.Position = UDim2.new(
-            framePos.X.Scale,
-            framePos.X.Offset + delta.X,
-            framePos.Y.Scale,
-            framePos.Y.Offset + delta.Y
-        )
-    end
-end)
-
--- Teleport
-Button.MouseButton1Click:Connect(function()
-    if humanoidRootPart then
-        local forward = humanoidRootPart.CFrame.LookVector
+--// Forward Teleport
+forwardBtn.MouseButton1Click:Connect(function()
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        local hrp = character.HumanoidRootPart
+        local forward = hrp.CFrame.LookVector
         local distance = 12
-        humanoidRootPart.CFrame = humanoidRootPart.CFrame + (forward * distance)
+        hrp.CFrame = hrp.CFrame + (forward * distance)
     end
+end)
+
+--// Update character after respawn
+player.CharacterAdded:Connect(function(char)
+    character = char
 end)
